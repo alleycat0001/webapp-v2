@@ -96,8 +96,10 @@ export const SwapLimit = ({
     (marketRate: number, rate: string) => {
       const percentage = calculatePercentageChange(Number(rate), marketRate);
       const index = percentages.indexOf(percentage);
-      if (index === -1) setPercentage(percentage.toFixed(2));
-      else {
+      if (index === -1) {
+        setSelPercentage(index);
+        setPercentage(percentage.toFixed(2));
+      } else {
         setPercentage('');
         setSelPercentage(index);
       }
@@ -213,7 +215,7 @@ export const SwapLimit = ({
   useEffect(() => {
     calculateRateByMarket(marketRate, selPercentage, percentage);
     // eslint-disable-next-line
-  }, [calculateRateByMarket, fromToken, toToken]);
+  }, [isLoadingRate, fromToken, toToken]);
 
   useEffect(() => {
     fetchMarketRate();

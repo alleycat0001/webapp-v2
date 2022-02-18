@@ -15,6 +15,11 @@ export const expandToken = (amount: string | number, precision: number) => {
   return inWei;
 };
 
+export const shrinkTokenToBigNum = (
+  amount: string | number | BigNumber,
+  decimals: number
+) => new BigNumber(amount).div(new BigNumber(10).pow(decimals));
+
 export const shrinkToken = (
   amount: string | number | BigNumber,
   precision: number,

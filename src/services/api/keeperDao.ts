@@ -19,7 +19,7 @@ import {
 } from './googleTagManager';
 import { utils } from 'ethers';
 import { ErrorCode } from 'services/web3/types';
-import { shrinkToken } from 'utils/formulas';
+import { shrinkToken, shrinkTokenToBigNum } from 'utils/formulas';
 import { ExchangeProxy__factory } from 'services/web3/abis/types';
 import { exchangeProxy$ } from 'services/observables/contracts';
 
@@ -191,6 +191,11 @@ const orderResToLimit = async (
 
     const payAmount = new BigNumber(res.order.makerAmount);
     const getAmount = new BigNumber(res.order.takerAmount);
+    const payAmountShrinked = shrinkTokenToBigNum(payAmount, payToken.decimals);
+    const getAmountShrinked = shrinkTokenToBigNum(getAmount, getToken.decimals);
+    const rate = `1 ${payToken.symbol} = ${getAmountShrinked.div(
+      payAmountShrinked
+    )} ${getToken.symbol}`;
     return {
       hash: res.metaData.orderHash,
       expiration: res.order.expiry,
@@ -198,9 +203,7 @@ const orderResToLimit = async (
       getToken,
       payAmount: prettifyNumber(shrinkToken(payAmount, payToken.decimals)),
       getAmount: prettifyNumber(shrinkToken(getAmount, getToken.decimals)),
-      rate: `1 ${payToken.symbol} = ${prettifyNumber(
-        getAmount.div(payAmount)
-      )} ${getToken.symbol}`,
+      rate,
       filled: prettifyNumber(
         new BigNumber(res.metaData.filledAmount_takerToken).div(
           res.metaData.remainingFillableAmount_takerToken

@@ -24,6 +24,9 @@ export const SwapLimitTable = () => {
   const [search, setSearch] = useState('');
   const dispatch = useDispatch();
   const tokens = useAppSelector<Token[]>((state) => state.bancor.tokens);
+  const notifications = useAppSelector<Notification[]>(
+    (state) => state.notification.notifications
+  );
 
   const refreshOrders = useCallback(async () => {
     if (account) setOrders(await getOrders(account));
@@ -40,7 +43,7 @@ export const SwapLimitTable = () => {
 
   useEffect(() => {
     refreshOrders();
-  }, [refreshOrders]);
+  }, [refreshOrders, notifications]);
 
   const defaultSort: SortingRule<LimitOrder> = { id: 'expiration', desc: true };
 
