@@ -213,12 +213,13 @@ export const SwapLimit = ({
       setMarketRate(Number(rate));
       setIsLoadingRate(false);
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [fromToken?.address, toToken?.address]
   );
 
   useEffect(() => {
     calculateRateByMarket(marketRate, selPercentage, percentage);
-    // eslint-disable-next-line
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [marketRate]);
 
   useEffect(() => {
