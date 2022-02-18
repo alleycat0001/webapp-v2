@@ -79,6 +79,7 @@ export const SwapLimit = ({
     dayjs.duration({ days: 7, hours: 0, minutes: 0 })
   );
 
+  const rateManuallyEntered = useRef<boolean>();
   const previousField = useRef<Field>();
   const lastChangedField = useRef<Field>();
   const tokens = useAppSelector<Token[]>((state) => state.bancor.tokens);
@@ -90,7 +91,7 @@ export const SwapLimit = ({
 
   useInterval(() => {
     fetchMarketRate(false);
-  }, 15000);
+  }, 5000);
 
   const calculatePercentageByRate = useCallback(
     (marketRate: number, rate: string) => {
@@ -122,7 +123,7 @@ export const SwapLimit = ({
     (from: string, rate: string) => {
       if (rate && from && toToken) {
         const amount = new BigNumber(rate).times(from);
-        setToAmount(amount.toString());
+        setToAmount(amount.isNaN() ? '' : amount.toString());
         const usdAmount = amount.times(toToken.usdPrice!).toString();
         setToAmountUsd(usdAmount);
       }
@@ -159,6 +160,7 @@ export const SwapLimit = ({
           else calcFrom(to, rate);
           break;
         case Field.rate:
+          rateManuallyEntered.current = true;
           const isTooHigh = new BigNumber(rate).lt(marketRate);
           const isTooLow = new BigNumber(marketRate).times(1.2).lt(rate);
           if (isTooHigh) {
@@ -187,13 +189,15 @@ export const SwapLimit = ({
 
   const calculateRateByMarket = useCallback(
     (marketRate: number, selPercentage: number, percentage: string) => {
-      const perc =
-        selPercentage === -1
-          ? Number(percentage) / 100
-          : percentages[selPercentage] / 100;
-      const rate = (marketRate * (1 + perc)).toFixed(6);
-      handleFieldChanged(Field.rate, fromAmount, toAmount, rate);
-      setRate(rate);
+      if (!rateManuallyEntered.current) {
+        const perc =
+          selPercentage === -1
+            ? Number(percentage) / 100
+            : percentages[selPercentage] / 100;
+        const rate = (marketRate * (1 + perc)).toFixed(6);
+        handleFieldChanged(Field.rate, fromAmount, toAmount, rate);
+        setRate(rate);
+      }
     },
     [percentages, fromAmount, toAmount, handleFieldChanged]
   );
@@ -209,17 +213,29 @@ export const SwapLimit = ({
       setMarketRate(Number(rate));
       setIsLoadingRate(false);
     },
-    [fromToken, toToken]
+    [fromToken?.address, toToken?.address]
   );
 
   useEffect(() => {
     calculateRateByMarket(marketRate, selPercentage, percentage);
     // eslint-disable-next-line
-  }, [isLoadingRate, fromToken, toToken]);
+  }, [marketRate]);
 
   useEffect(() => {
+    // if the tokens change, reset
+    rateManuallyEntered.current = false;
+    setSelPercentage(1);
+    setPercentage('');
     fetchMarketRate();
-  }, [fetchMarketRate, fromToken, toToken]);
+  }, [fetchMarketRate, fromToken?.address, toToken?.address]);
+
+  useEffect(() => {
+    setFromAmount('');
+  }, [fromToken?.address]);
+
+  useEffect(() => {
+    setToAmount('');
+  }, [toToken?.address]);
 
   //Check if approval is required
   const checkApproval = async (token: Token) => {
@@ -483,6 +499,7 @@ export const SwapLimit = ({
                       }
                     )} bg-opacity-0`}
                     onClick={() => {
+                      rateManuallyEntered.current = false;
                       calculateRateByMarket(marketRate, index, '');
                       setSelPercentage(index);
                       setPercentage('');
@@ -508,6 +525,7 @@ export const SwapLimit = ({
                       setSelPercentage(sel);
                     }}
                     onChange={(val: string) => {
+                      rateManuallyEntered.current = false;
                       calculateRateByMarket(marketRate, -1, val);
                       setPercentage(val);
                     }}
