@@ -140,6 +140,10 @@ export const SwapLimit = ({
     },
     [calculatePercentageByRate, marketRate]
   );
+  const setRateToMarket = useCallback(() => {
+    setSelPercentage(-1);
+    setRate(marketRate.toString());
+  }, [marketRate, setRate]);
 
   const handleFieldChanged = useCallback(
     (field: Field, from: string, to: string, rate: string) => {
@@ -161,17 +165,11 @@ export const SwapLimit = ({
           break;
         case Field.rate:
           rateManuallyEntered.current = true;
-          const isTooHigh = new BigNumber(rate).lt(marketRate);
-          const isTooLow = new BigNumber(marketRate).times(1.2).lt(rate);
-          if (isTooHigh) {
+          const isTooLow = new BigNumber(rate).lt(marketRate);
+          if (isTooLow) {
             setRateWarning({
               type: 'error',
               msg: 'Pay attention! The rate is lower than market rate, you can get a better rate on market swap',
-            });
-          } else if (isTooLow) {
-            setRateWarning({
-              type: 'warning',
-              msg: 'Pay attention! The rate is too high above market rate and will likely not be fulfilled',
             });
           } else {
             setRateWarning({
@@ -457,9 +455,14 @@ export const SwapLimit = ({
                 ) : (
                   <div className="text-12">
                     Market Rate:{' '}
-                    {`1 ${fromToken?.symbol} = ${prettifyNumber(marketRate)} ${
-                      toToken?.symbol
-                    }`}
+                    <button
+                      className="hover:underline text-primary"
+                      onClick={() => setRateToMarket()}
+                    >
+                      {`1 ${fromToken?.symbol} = ${prettifyNumber(
+                        marketRate
+                      )} ${toToken?.symbol}`}
+                    </button>
                   </div>
                 )}
               </div>
